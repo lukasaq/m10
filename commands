@@ -1,1 +1,24 @@
+########## mod 10 lesson 1 ###############
+######### switching ##########
+
+Cisco Configuration Mode ###########
+configure terminal
+interface GigabitEthernet0/0
+
+show run : show running config
+
+syntax : monitor session1 source po/1-po/23
+monitor session1 dest po/24
+
+monitor session 1 source interface GigabitEthernet0/0 - 1
+monitor session 1 destination interface GigabitEthernet3/3
+do show running-config | section monitor
+no monitor session 1
+monitor session 1 source interface GigabitEthernet0/0 - 1
+monitor session 1 destination interface GigabitEthernet3/3
+interface GigabitEthernet2/0
+switchport access vlan 999
+no monitor session 1
+monitor session 1 source interface GigabitEthernet0/0 - 1
+monitor session 1 destination interface GigabitEthernet3/3
 
