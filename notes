@@ -77,21 +77,84 @@ VLANs are defined in the IEEE 802.1Q standard, which states that 32 bits are all
 Tag Protocol Identifier (TPID): 16-bit field set to 0x8100 to identify the 802.1Q packetPriority Code Point (PCP): 3-bit Class of Service (CoS) field; assigned to Layer 2 QoS between switchesDrop Eligible Indicator (DEI): 1-bit field indicating whether the packet can be dropped when insufficient bandwidth is available on a link; when identified, indicates the potential use of Voice over IP (VoIP) trafficVLAN ID: 12-bit field specifying the VLAN associated with a network packet
 
 
+LAN traversal happens via routing on Layer 3 — so-called Layer 3 switches are able to control and allow machines on different VLANs to communicate with each other in a manner managed by the switch.
+
+Private VLANs further subdivide VLANs, allowing for isolation of devices within a VLAN from each other. When assigning a private VLAN to a port, in addition to the primary VLAN, a community VLAN ID is required. Three types of private VLAN ports exist:
+
+Promiscuous Typically reserved for routers or other gateway devices, these ports can receive traffic from any of the ports in a VLAN, regardless of the private VLAN configurations of those devices.
+
+Isolated Only able to communicate with promiscuous ports, these ports are isolated from all other ports. However, communication with the primary VLAN is possible.
+
+Community Able to communicate with promiscuous ports and other community ports on the same community VLAN. Additionally, community ports can communicate with the primary VLAN.
+
+The default native VLAN for most switch vendors is VLAN 1.
+
+
+Practical Implications #############
+Switch configurations have practical implications for the security of a network. Some examples of attacks that rely on the behavior of switches or misconfigurations follow:
+
+MAC Flooding This attack relies on switches having a limited amount of memory for storing the MAC address table, which is used to store MAC address-to-port associations. Due to the inability to store updates to this table, many switches failover to broadcast mode for all data frames — similar to network hubs. This allows an attacker physically attached to a switch to view all traffic passing through the switch, rather than just traffic intended to be bound for that machine.
+
+MAC Spoofing This attack merely has the attacker present a different MAC address to the switch than the actual hardware MAC. This can be done for various reasons, such as bypassing MAC filters, masquerading as a legitimate device, or evading information gathering by masquerading as a different device.
+
+VLAN Hopping This attack — accomplished via a handful of methods — allows the attacker to view or transmit to or from VLANs that would normally not be permitted. Since VLANs are often used for isolation, this may allow an attacker to view or communicate with sensitive machines.
+
+Address Resolution Protocol (ARP) Poisoning While technically a Layer 3 attack, mitigation is often the responsibility of switches on the network. This attack allows an attacker to falsify ARP tables by sending forged packets, which causes clients to forward packets to the wrong MAC address for a specified IP address. This can be used to Man-in-the-Middle (MitM) traffic bound for a specific host — including a gateway router — to observe traffic.
+
+Mitigations ########### 
+
+These attacks can be mitigated in various ways, some of which are covered in later lessons. A general overview of the mitigations for each of these follows:
+MAC Flooding/Spoofing Mitigations for these attacks depend on the network configuration. If MAC addresses are known, each port can be configured with a whitelist of each address allowed on that port. Alternately, authentication in some manner — such as AAA or 802.1x — can be used to ensure that only approved devices are allowed to connect to ports or wireless for Wireless Fidelity (Wi-Fi) switches
+
+VLAN Hopping VLAN hopping can be mitigated via appropriate port configurations. Enforcing correct settings here involves ensuring that client ports are set to access only, disabling trunk auto-negotiation on client ports, and ensuring that the native VLAN for client ports is set to an inaccessible VLAN. More details about these attacks and their mitigations are covered in the VLAN Attacks and Defenses lesson.
+
+ARP Poisoning ARP Poisoning attacks can be mitigated in several ways, depending on the network and its configuration. Mitigating these attacks generally involves switch and/or router configuration. Wi-Fi-based mitigation can be accomplished via client isolation, which prevents Wi-Fi clients from sending ARP packets to each other; wired-based mitigation can involve rate-limiting, manually binding important IP addresses to specific ports, or using vendor-specific, anti-spoofing technology that validates ARP packets by validating against known hosts and blackholing unknown hosts that attempt to duplicate IP addresses. More details about these attacks and their mitigations are given in the MitM Attacks and Defenses lesson.
 
 
 
+The original STP is from IEEE's 802.1D standards and supports ensuring a loop-free topology for one VLAN. Therefore, this topic is vital to understand as a foundation for learning how the other STP iterations operate.
+
+802.1D Port States
+
+In the 802.1D STP protocol, ports transition through the following states:
+
+Disabled: The port is in an administratively disabled configuration (shut down).
+
+ Blocking: The state right after the switch port is enabled. The port does not forward any traffic, which ensures that no loop is created. The switch in this state does not modify the MAC address table, and it only receives BPDUs from other switches.
+
+ Listening: The switch port has transitioned out of the blocking state and sends/receives BPDUs. At this point, it cannot transmit any other network traffic. The duration of the listening state correlates to the STP forwarding time. 
+
+ Learning:  While the switch port is in this state, the switch can modify the MAC address table with traffic that it receives. The switch port — up to this point — only forwards BPDUs. The duration of the learning state correlates to the STP forwarding time.
+
+Forwarding: The switch can update the MAC address table, and the switch port can forward all network traffic. During normal operations, the switch port stays in the forwarding state. 
+
+ Broken: The switch has detected a problem on a port that can have a significant impact. The port drops packets as long as the situation persists.
+
+Spanning Tree Port Types
 
 
+The 802.1D STP standard defines three port types:
+Root Port (RP): Each VLAN should only have one associated RP on a switch. The RP is a switch port that connects directly to the root bridge or an upstream switch in the spanning-tree topology. Designated Port (DP): There should be only one active designated port on a link. A DP is a switch port that receives and forwards BPDU frames to other switches and connects to downstream devices and other switches. Blocking port: A port that is not forwarding traffic because of STP calculations.
 
 
+STP Key Terminology
 
 
+There are several key terms related to the STP:
+Root bridge: Most critical switch in the Layer 2 topology. All switch ports are in a forwarding state. Therefore, the Root Bridge is considered the top of the spanning tree for all path calculations by other switches. BPDU: A BPDU default destination MAC address is the multicast address 01:80:c2:00:00:00. They are used by switches to build and notify of changes in the STP topology. Two types of BPDUs exist:Configuration BPDUs: Used to identify the root bridge, root ports, designated ports, and blocking ports. The configuration BPDU contains the following fields: root path cost, root bridge identifier, local bridge identifier, max-age, hello time, forward delay, and STP type.Topology Change Notification (TCN) BPDU: Used to notify other switches of the Layer 2 topology changes.
+Root Path Cost: Combined cost of a specific path to the root switch.System priority: A 4-bit value with a default value of 32,768. Determines the priority for a switch to be the root bridge.System ID extension: A 12-bit value indicating the VLAN that a BPDU belongs to. The system priority and ID extension combine to form the switch's root bridge identification.Root bridge identifier: Combination of the root bridge system MAC address, system ID extension, and system priority. Represented as system priority value added to the system ID extension value and resulting value concatenated with the root bridge system MAC address.Local bridge identifier: Combination of the local switch's bridge system MAC address, system ID extension, and system priority. Represented as system priority value added to the system ID extension value and resulting value concatenated with the root bridge system MAC address.Max-age: With a default value of 20 seconds, this is the time threshold before a bridge port saves its BPDU information. If a switch loses contact with the switch that originated the BPDU, the BPDU is still valid until the Max-Age timer expires.Hello time: Interval in which a BPDU is transmitted out of a port. The Hello Time default value is two seconds, though the value can be configured anywhere between 1–10 seconds.Forward delay: Interval a port stays in the listening and learning states. The Forward delay default value is 15 seconds, though this value can be configured to a value between 4–30 seconds.
+NOTE: STP was developed before modern switches existed. Ethernet bridges were the early adopters of the STP. Switches today perform the same role as bridges at a much higher speed and scale. The terms bridge and switch are interchangeable in this lesson.
 
 
+A TAP — sometimes called a Test Access Point 
 
+In-band TAP
 
+Setting up in-band — or inline — ensures no traffic is lost when dealing with a switch/router that has a larger traffic throughput. The network TAP is placed in line with the communication chain of the network (e.g., a device placed between two devices such that the original physical connection between the two devices is interrupted by the TAP, 
 
+Out-of-band TAP
 
+Operating out-of-band, the TAP/stack operates on its own network, receiving the mission network's traffic via one or more Switched Port Analyzer (SPAN) ports from devices on the network. A downside to running out-of-band, however, is that SPAN ports can become overwhelmed in some circumstances. 
 
 
 
