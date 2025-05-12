@@ -124,13 +124,27 @@ Pivot back to R1 to check the neighbor status and routing table.
 show ip ospf neighbor — Provides a brief summary of the router's current OSPF neighbor.
 show ip route ospf — Displays OSPF routes in the routing table.
 
+default-information originate - force an ASBR to generate a default route,
+
+Brief sample of a route-map managing the redistribution of static routes into OSPF process 1, though OSPF is used in this example, route-maps can be used by all routing protocols. 
+
+ip route 172.16.0.0 255.255.255.0 172.17.1.1
+ip route 192.168.11.0 255.255.255.0 172.17.1.129
+!
+ip prefix-list connected-to-ospf seq 5 permit 172.16.0.0/24
+!
+route-map connected-to-ospf permit 10 
+ match ip address prefix-list connected-to-ospf
+ set metric 100
+!
+router ospf 1
+ redistribute static subnets route-map connected-to-ospf
 
 
 
 
 
-
-
+Border Gateway Protocol ###################
 
 
 
