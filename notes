@@ -163,7 +163,7 @@ image saved : ospf costvalues
 image saved : lsa type chart
 image saved : link type
 image saved : bgp states
-image saved :
+image saved : BGP Attribute List:
 image saved :
 image saved :
 image saved :
@@ -309,16 +309,36 @@ Packets sent to eBGP peers use a Time to Live (TTL) of 1.The NEXT_HOP attribut
 The timers bgp 3 15 command makes the router send KEEPALIVE message every three seconds and use a hold timer of 15 seconds by default. For the peering configuration with neighbor 200.200.2.1, a keepalive interval of ten seconds is used, and a hold time of 30 seconds. If there is a difference between BGP peers timers configuration, the lower timer setting is adopted.
 Keepalive Interval: Time interval (in seconds) between sending KEEPALIVE messages.Hold Time: Time interval (in seconds) after which the neighbor is considered unreachable.
 
+Marker — Field included in the header for compatibility, synchronization, and authentication. The size of the field – 16 bytes.
+
+Length — Total length of the message in bytes, including the fields of the header. The minimum value of this field is 19 bytes for a KEEPALIVE message and may go as high as 4096 bytes.
+
+
+Type — Type of message sent:
+Type 1 - OPEN
+Type 2 - UPDATE
+Type 3 - NOTIFICATION
+Type 4 - KEEPALIVE
+
+Message Type 1 — Open
+Here is a brief explanation of the function of each field:
+Version: BGP protocol version.My Autonomous System: ASN source.
+Hold Time: The maximum time (seconds) can elapse between receiving the KEEPALIVE and UPDATE message.BGP Identifier: Contains the BGP Router-ID (RID). A 32-bit unique number that identifies the BGP router in the advertised prefixes as the BGP Identifier. Typically represented by an IPv4 address that resides on the router.Optional Parameters Length: If the field is 0, the marker is set to 1, and Optional Parameters have zero length. If the field is different from 0, data necessary to determine the specified code in the marker field is recorded in the Optional Parameters.Optional Parameters: Plays a role in forming and identifying the code in the marker field.
+
+
+Path Attributes
+There are four categories of Path Attributes:
+
+Well-known mandatory – BGP attributes that must be recognized by all BGP routers, present in all BGP updates, and passed on to other BGP peers.
+Well-known discretionary – BGP attributes all BGP routers must recognize by all BGP routers that and passed on to other BGP peers but do not need to be present in an update.
+Optional transitive – BGP attributes that might or might not be recognized by a BGP router but passed on to other BGP peers. If not recognized, it is marked as partial.
+Optional non-transitive – BGP attributes that might or might not be recognized by a BGP router and not passed on to other peers.
 
 
 
 
-
-
-
-
-
-
+########## mod 10 lesson 3 ###############
+######### Protocol Basics ##########
 
 
 
