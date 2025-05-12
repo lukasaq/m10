@@ -156,24 +156,48 @@ Out-of-band TAP
 
 Operating out-of-band, the TAP/stack operates on its own network, receiving the mission network's traffic via one or more Switched Port Analyzer (SPAN) ports from devices on the network. A downside to running out-of-band, however, is that SPAN ports can become overwhelmed in some circumstances. 
 
+########## mod 10 lesson 2 ###############
+######### Routing ##########
+
+image saved : ospf costvalues
+image saved : lsa type chart
+image saved : link type
+image saved :
+image saved :
+image saved :
+image saved :
+image saved :
 
 
+ Link-State protocols send information about directly connected links to all routers in the network and updates consist of only those links that have changed.
+
+ RFC 2328, OSPF is an Interior Gateway Protocol (IGP) used to distribute routing information in a single Autonomous System (AS). 
+
+OSPF uses the shortest path first algorithm to build and calculate the optimal path to all known destinations. The optimal path is calculated with the use of the Dijkstra algorithm. These next steps are a simplified way of looking at the algorithm's operation:
+
+1. On startup or when there is any change in routing information, a router generates a link-state advertisement. This advertisement represents the combination of all link-states on that router.
+
+2. All routers exchange link-states by flooding link-states to all neighboring routers. Each router that receives a link-state update stores a copy in its link-state database and then advertises the update to other neighboring routers.
+
+3. After each router completes building its database, the router calculates a Shortest Path Tree to all learned destinations. The router uses the Dijkstra algorithm to build the IP routing table, also referred to as the Routing Information Base (RIB).
+
+4. If no changes in the OSPF network occur, such as the cost of a link or a network being added or deleted, OSPF only exchanges Hello packets. Any changes that occur are advertised through link-state packets, and the Dijkstra algorithm is recalculated to find the shortest path.
+
+The algorithm places each router at the root of a tree and calculates the shortest path to each destination based on the cumulative cost required to reach that destination. Thus, each router has its own topology view even though all the routers build their shortest path tree using the same link-state database. The following sections cover the steps involved in building a shortest path tree.
 
 
+This exact process is repeated to elect the BDR. Suppose there is a tie, the router with the highest router-ID wins. The default priority for an OSPF interface is one.
 
+The adjacency building starts after multiple phases have been completed. Routers that become adjacent have the same LSDB. The following is a summary of the states an interface passes through before becoming adjacent to another router:
 
-
-
-
-
-
-
-
-
-
-
-
-
+Down: No information has been received from a router on the network segment.
+Attempt: On non-broadcast multi-access clouds such as X.25 and Frame Relay, the Attempt state indicates that no recent information has been received from a neighbor. An effort should be made to contact the neighbor by sending Hello packets at the reduced rate Poll Interval.
+Init: The interface has detected a Hello packet coming from a neighbor, but bi-directional communication has yet to be established.
+Two-way: Bi-directional communication has been established with a neighbor. The router has seen its router-ID in the Hello packets received from a neighbor. At the end of this stage, the election of a DR and BDR would have completed. Once the Two-way stage is completed, routers decide whether to proceed in establishing adjacency or not. This decision is based on whether one of the routers is a DR or BDR; or if the link is a virtual link or point-to-point.
+Exstart: OSPF routers are trying to establish the initial sequence number that is used in the information exchange packets. This sequence number ensures that routers always receive the most up-to-date information. One router becomes the primary, the other secondary. The primary router proceeds to poll the secondary for information.
+Exchange: OSPF routers report their entire link-state database by sending database description packets to all interfaces referenced in the OSPF network command. At this state, packets can be flooded to other interfaces on the router.
+Loading: At this state, routers are completing information exchange. OSPF routers have built a link-state retransmission list and a link-state request list. Any incomplete or outdated information is added to the request list. Transmitted updates are added to the retransmission list until they get acknowledged.
+Full: At this state, adjacency is complete. Neighboring routers are fully adjacent. Therefore, adjacent routers operate with a similar link-state database.
 
 
 
