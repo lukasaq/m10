@@ -162,7 +162,7 @@ Operating out-of-band, the TAP/stack operates on its own network, receiving the 
 image saved : ospf costvalues
 image saved : lsa type chart
 image saved : link type
-image saved :
+image saved : bgp states
 image saved :
 image saved :
 image saved :
@@ -198,6 +198,129 @@ Exstart: OSPF routers are trying to establish the initial sequence number that 
 Exchange: OSPF routers report their entire link-state database by sending database description packets to all interfaces referenced in the OSPF network command. At this state, packets can be flooded to other interfaces on the router.
 Loading: At this state, routers are completing information exchange. OSPF routers have built a link-state retransmission list and a link-state request list. Any incomplete or outdated information is added to the request list. Transmitted updates are added to the retransmission list until they get acknowledged.
 Full: At this state, adjacency is complete. Neighboring routers are fully adjacent. Therefore, adjacent routers operate with a similar link-state database.
+
+ for example, to set the metric for redistributed routes. General rules for route-maps are as follows:
+Each route-map command must have a uniquely configured name. All commands that use the same name are a part of the same route-map.
+Each route-map command has an associated permit or deny action.
+Each command in the same route-map has a unique sequence number; this allows for the deletion and insertion of single route-map commands.
+When a route-map is used for route redistribution, the route-map processes routes taken from the current routing table.
+Route-maps are processed sequentially based on their sequence numbers.
+If a route is matched in a route-map statement and the route-map statement has a deny action, the route is not redistributed (specific to route redistribution).
+
+Brief sample of a route-map managing the redistribution of static routes into OSPF process 1, though OSPF is used in this example, route-maps can be used by all routing protocols. 
+
+
+ip route 172.16.0.0 255.255.255.0 172.17.1.1
+ip route 192.168.11.0 255.255.255.0 172.17.1.129
+!
+ip prefix-list connected-to-ospf seq 5 permit 172.16.0.0/24
+!
+route-map connected-to-ospf permit 10 
+ match ip address prefix-list connected-to-ospf
+ set metric 100
+!
+router ospf 1
+ redistribute static subnets route-map connected-to-ospf
+
+
+
+Breaking down the sample configuration:
+Router is hosting two static routesA prefix-list has been created to define (control) the route to be redistributedThe route-map has been created with a unique name, sequence number, and actionIn the route-map, the match statement refers to the prefix-list with the prefix of the static route is redistributedThe route-map also defines that all routes that match are redistributed with a metric of 100
+In OSPF 1 process the route-map is controlling the redistribution. Route 172.16.0.0/24 is redistributed with a metric of 100Route 192.168.11.0/24 is denied by the route-map
+NOTE: Managing inbound and outbound route redistribution is a key control to mitigating malicious activity attempting to leverage routing domains. This method also provides network administrators and security practitioners an additional means of access control by limiting how routes propagate throughout the routing domain. 
+
+
+
+Border Gateway Protocol ###################
+
+Border Gateway Protocol (BGP) — classified as an Exterior Gateway Protocol (EGP) — is the premier protocol used throughout the Internet and large-scale enterprise networks for routing between autonomous systems. 
+
+
+Path Attributes
+
+
+Assigned variables that BGP routers use to choose an optimal path to a destination. Some of the attributes of the path listed in the Looking Glass Server output are:
+MED
+LOCAL_PREF
+ORIGIN
+AS_PATH
+WEIGHT
+NEXT_HOP
+
+BGP Main Characteristics
+
+
+BGP is a path-vector protocol with the following characteristics:
+Relies on TCP port 179 to transfer data providing reliable delivery of BGP updates.
+Only sends updates when a path change occurs (no periodic updates).
+The protocol uses path vector or attributes to determine optimal paths.
+Utilizes a keepalive message to verify and maintain TCP connection with neighbors.
+
+
+ An Autonomous System (AS) is a collection of IP networks and routers under the control of one or a few network operators that has a single, clearly defined routing policy.
+
+Autonomous System Number (ASN) Ranges
+
+
+ASNs — similar to IP addresses — operate with public and private ranges. ASNs were also recently expanded to address the exhaustion of the two-octet AS numbers.
+0-65535 (initial 16-bit ASNs)
+65536-4294967295 (new range for 32-bit ASNs) (RFC 4893)
+
+ASN Assignments
+0 and 65535 (reserved)
+1-64495 (public range)
+65552-4294967295 (public range)
+64512-65534 (private range)
+23456 (reserved to represent 32-bit ASN on devices that only support 16-bit ASNs - represented as AS_TRANS) (RFC 4893)
+
+
+BGP Table
+List of networks received from each neighbor — Network Layer Reachability Information (NLRI)
+It might contain multiple paths to a destination network
+Contains BGP path attributes
+
+Routing Table
+Often referred to as the Routing Information Base (RIB), it contains the list of the best routes to destination networks
+If there are multiple paths to a destination, the router advertises only the best path from the BGP table to its peers rather than all available paths.
+
+goal for BGP routers is to reach the ESTABLISHED state. In this state, the routers have established a TCP connection, exchanged OPEN messages, and all parameter checks have passed, at which point topology information can be exchanged using UPDATE messages.
+
+BGP Neighbor Relationship
+To establish peering, each BGP router must be manually configured to enable the BGP process. When a neighbor is added to the local router configuration, the neighbor's AS must also be included.
+
+iBGP neighbors: A router that is in the same AS as the local router. When added to the local router configuration, the neighbors share the same ASN.
+
+eBGP neighbor: A router that is in a different AS of the local router. When added to the local router configuration, the neighbor is configured with its ASN.
+
+The type of BGP neighbor has little effect on BGP neighbor peering establishment. However, more significant differences between neighbor types appear in the process of sending BGP updates and adding routes to the routing table.
+
+During the neighbor relationship establishment, BGP performs the following checks:
+-The router must receive a TCP layer connection request on port 179 with the sender's address, which the router finds specified in the list of neighbors configured.
+-The ASN of the local router must match the ASN that is configured on the neighboring router in the neighbor remote-as command. There are exemptions to this requirement when ASs are operating in a confederation setting. Confederations are outside of the scope of this lesson but are briefly covered later. 
+- The neighbor's router ID should not match that of the local router.
+- If configured, MD5 authentication must be completed successfully.
+
+BGP performs keepalive and hold timer checks; however, the difference of these parameters does not affect the neighbor relationship establishment. If timers do not match, then each router uses the smaller value of the hold timer.
+
+
+Although the configuration between the two methods of deploying BGP is minor, they have slight differences in how they operate:
+Packets sent to eBGP peers use a Time to Live (TTL) of 1.The NEXT_HOP attribute is updated with the last eBGP peer. This does not occur in an iBGP process.eBGP neighbors do not advertise routes to eBGP neighbors in an AS that is contained within the AS_PATH.iBGP routes Administrative Distance (AD) is 200; eBGP routes AD is 20.iBGP routes are subject to BGP synchronization (when enabled).
+
+The timers bgp 3 15 command makes the router send KEEPALIVE message every three seconds and use a hold timer of 15 seconds by default. For the peering configuration with neighbor 200.200.2.1, a keepalive interval of ten seconds is used, and a hold time of 30 seconds. If there is a difference between BGP peers timers configuration, the lower timer setting is adopted.
+Keepalive Interval: Time interval (in seconds) between sending KEEPALIVE messages.Hold Time: Time interval (in seconds) after which the neighbor is considered unreachable.
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
