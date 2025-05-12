@@ -146,37 +146,123 @@ router ospf 1
 
 Border Gateway Protocol ###################
 
+Cisco commands used in this step:
+- show run interface GigabitEthernet5 — Displays the interface's current configuration.
+- configure terminal — Enters the router's configuration mode.
+- interface GigabitEthernet5 — Enters the interface’s configuration mode.
+- no shutdown — Enables an interface or process.
+- end — Returns the prompt to enable mode.
+- show ip interface brief GigabitEthernet5 — Provides a brief summary of the interface and its status.
+
+Verify connectivity to all BGP peers.
+Cisco commands used in this step:
+- ping 173.67.9.17 repeat 10 — Checks connectivity to neighbor IP with 10 pings.
+- show ip route 64.210.18.2 — Verifies that R2 Loopback0 IP address is in the routing table.
+- ping 64.210.18.2 repeat 10 — Checks connectivity to R2 loopback interface with 10 pings
+
+Once connectivity has been verified to AS 701, proceed with creating the BGP process and defining the BGP neighbors with their AS numbers. 
+Cisco commands used in this step: 
+- configure terminal — Enters the router's configuration mode.
+- router bgp 3349 — Enters router BGP 3349; different than IGPs; the process ID identifies the local AS.
+- neighbor 173.67.9.17 remote-as 702 — Defines the eBGP neighbor and their local AS.
+- neighbor 173.67.9.17 password cda3349tovzb701 — Uses MD5 key for peering negotiation.
+- neighbor 64.210.18.2 remote-as 3349 — Defines the iBGP neighbor and local AS.
+- neighbor 64.210.18.2 update-source Loopback0 — Sends updates to peer using local Loopback0 interface.
+- network 64.210.18.1 mask 255.255.255.255 — Advertises prefix 64.210.18.1/32.
+- end — Returns the prompt to enable mode.
+
+Verify the status of all the BGP peer connections.
+Cisco commands used in this step:
+- show ip bgp summary — Displays summary status of configured BGP peers.
+
+Command used in this step:
+- clear ip bgp 173.67.9.17 — Resets BGP connections with peer.
+
+Using the following display filter, select an OPEN Message BGP packet with source IP 173.67.9.17, and expand the Border Gateway Protocol - OPEN Message field:
+(((bgp) && (ip.src == 173.67.9.17))) && (bgp.type == 1)
+Breaking down the Wireshark display filter:
+(bgp) — Displays only the BGP protocol that needs to be inspected.
+&& — AND operand used to string filter expressions together; displays only BGP traffic and only when traffic matches the following filter expression.
+(ip.src == 173.67.9.17) — Displays packets with IP source 173.67.9.17.
+&& — AND operand strings filter expressions together; displays traffic that matches the previous filter expressions (((bgp) && (ip.src == 173.67.9.17))) and the following filter.
+(bgp.type == 1) — Displays only OPEN messages.
+
+This step requires removing the existing command with no command preceding the existing configuration.
+Cisco commands used in this step:
+- terminal monitor — Displays debug and system error messages for the current terminal.
+- configure terminal — Enters the router's configuration mode
+- router bgp 3349 — Enters router BGP 3349; different than IGPs; the process ID identifies the local AS.
+- no neighbor 173.67.9.17 remote-as 702 — Removes the incorrect configuration; removing the neighbor configuration results in the configuration with the password being removed as well.
+- neighbor 173.67.9.17 remote-as 701 — Defines the BGP neighbor with the correct ASN
+- neighbor 173.67.9.17 password cda3349tovzb701 — Re-applies the MD5 key for peering negotiation.
+- end — Returns prompt to enable mode.
+- show ip bgp summary — Displays summary status of configured BGP peers.
+- terminal no monitor — Disables displaying debug and system error messages for the current terminal.
+
+Check the BGP table for prefixes originating from AS 701.
+Cisco commands used in this step:
+show ip bgp — Displays the router's BGP table. Remember, use the |include option to filter the output.
+
+wireshark filter 
+
+((((bgp) && (ip.src == 173.67.9.16/30))) && (bgp.type == 2)) && (bgp.nlri_prefix == 0.0.0.0)
+Breaking down the Wireshark display filter:
+(bgp) — Displays only the BGP protocol that needs to be inspected.
+&& — AND operand used to string filter expressions together; displays only BGP traffic and only when traffic matches the following filter expression.
+(ip.src == 173.67.9.16/30) — Displays packets with IP source in the range 173.67.9.16 – 173.67.9.19.
+&& — AND operand strings filter expressions together; displays traffic that matches the previous filter expressions (((bgp) && (ip.src == 173.67.9.16/30))) and the following filter.
+(bgp.type == 2) — Displays only Update Messages.
+&& — AND operand strings filter expressions together; displays traffic that matches the previous filter expressions (((bgp) && (ip.src == 173.67.9.16/30))) and the following filter.
+(bgp.nlri_prefix == 0.0.0.0) — Displays all BGP Update Messages that advertise a default gateway NLRI.
+
+
+Verify if the default gateway found in the BGP Update Message packet matches that in the router's IP routing table.
+Cisco commands used in this step:
+show ip route 0.0.0.0 — Displays the routing table entry for prefix 0.0.0.0.
+
+R1#show ip route 0.0.0.0
+Routing entry for 0.0.0.0/0, supernet
+  Known via "bgp 3349", distance 20, metric 0, candidate default path
+  Tag 701, type external
+  Last update from 173.67.9.17 00:47:40 ago
+  Routing Descriptor Blocks:
+  * 173.67.9.17, from 173.67.9.17, 00:47:40 ago
+      Route metric is 0, traffic share count is 1
+      AS Hops 1
+      Route tag 701
+      MPLS label: none
+R1#
+
+Analysis of the output:
+- Known via "bgp 3349" — Identifies the routing process that originated this route.
+- distance 20 — Identifies the cost of the route.
+- Tag 701, type external — Tag 701 integer that is used to implement the route for BGP routes; default is to use the originating AS, though the value can be manipulated with route-maps.
+- type external — States that the route originated from an external routing process
+- Last update from 173.67.9.17 00:47:40 ago — Depicts how long the route has been available in the routing table.
+* 173.67.9.17, from 173.67.9.17, 00:47:40 ago — Preferred next hop to prefix and source of the advertisement.
+- AS Hops 1 — Number of ASs to reach destination prefix.
+
+
+Once connectivity has been fully established with each BGP peer, you should be able to ping the gateway — last octet = .1 — of any prefixes in the routing table using the loopback interface as a source, and validate that the requirement to advertise R1's loopback interface to Verizon has been met.
+
+
+Cisco commands used in this step:
+- show ip bgp nei 173.67.9.17 advertised-routes | in 64.210.18.1 — Shows all prefixes being advertised to neighbor 173.67.9.17 and filter for R1 Loopback0 IP address 64.210.18.1.
+- show ip route bgp — Displays the BGP routes that have populated the routing table.
+- ping 2.56.232.1 repeat 10 source Loopback0 — Checks connectivity to prefix advertised by AS 3356 - iBGP cost [200/1] — using Loopback0 IP address as source.
+- ping 15.143.96.1 repeat 10 source Loopback0 — Checks connectivity to prefix advertised by AS 701 - eBGP cost [20/1] — using Loopback0 IP address as source.
+
+
+########## mod 10 lesson 3 ###############
+######### Protocol Basics ##########
+
+
+http.request and tcp.port eq 8082
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+NOTE: It is important to note the number at the end of the POST request in the URI, as that denotes what the bot is sending:
+81: Cached password data from the system, web browsers, email clients, etc.83: Browser form data submitted by applications90: System information
 
 
 
