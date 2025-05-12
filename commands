@@ -22,3 +22,166 @@ no monitor session 1
 monitor session 1 source interface GigabitEthernet0/0 - 1
 monitor session 1 destination interface GigabitEthernet3/3
 
+########## mod 10 lesson 2 ###############
+######### Routing ##########
+
+router ospf <process-id> : Enabling an OSPF process
+<network or IP address> <mask> <area-id> : within the OSPF process created with the router ospf <process-id> assigning the interfaces to the areas using the command network
+
+Cisco commands used in this step: 
+show run interface GigabitEthernet 4 — Displays the interfaces current configuration.
+configure terminal — Enters the router configuration mode.
+interface GigabitEthernet 4 — Enters the interface configuration mode.
+no shutdown — Enables an interface or process.
+end —Returns the prompt to enable mode.
+show ip interface brief GigabitEthernet 4 — Provides a brief summary of the interface and its status.
+
+wireshark filter
+(ospf) && (ip.src == 64.210.18.74)
+Breaking down the Wireshark display filter:
+(ospf) — Displays only the OSPF protocol that needs to be inspected
+&& — AND operand used to string filter expressions together, display only OSPF traffic AND only when traffic matches the following filter expression. 
+(ip.src == 64.210.18.74) — Displays packets whose IP source is 64.210.18.74. Based on R1 GigabitEthernet4 IP address and subnet mask 64.210.18.73 255.255.255.252, by analyzing the subnet mask 255.255.255.252, the only other IP address available in the 64.210.18.72/255.255.255.252 range is 64.210.18.74, which can only be the router R1 is establishing OSPF adjacency with.
+
+Cisco commands used in this step: 
+show run | section router ospf 1 — Shows the current configuration section for OSPF process 1.
+configure terminal - Enters the routers configuration mode.
+router ospf 1 — Enter router OSPF process configuration.
+network 64.210.18.73 0.0.0.0 area 8 — Assign network segment with IP address to the area.
+no passive-interface GigabitEthernet 4 — For security reasons the command passive-interface default was applied to the router's OSPF process. This disabled all interfaces on the router from forming OSPF adjacency. To enable an interface to form adjacency, the no passive-interface <interface> is required. 
+end — Returns the prompt to enable mode.
+
+The Cisco IOS provides ways of searching through command output while working with the CLI. These features work with the show and more commands, which generally display large amounts of data. Some of the most used areas:
+
+show .... | include <pattern> — Parse the output through include and display anything that matches <pattern>. 
+how .... | exclude <pattern> — Parse the output through exclude and display all output but <pattern>.
+show .... | section <pattern> — Parse the output through section and display only the section of the output that matches the <pattern>.
+
+Cisco commands used in this step: 
+show ip ospf neighbor — Provides a brief summary of the router's current OSPF neighbor.
+show ip route ospf — Displays OSPF routes in the routing table.
+
+wireshark filter
+ filter ((ospf ) && (ip.src == 64.210.18.72/30)) && !(ospf.msg == 1). The remaining packet displayed is the communication required for the routers to exchange routing information and establish full adjacency. 
+
+Breaking down the Wireshark display filter:
+(ospf) — Display only the OSPF protocol that needs to be inspected.
+&& — AND operand strings filter expressions together, display only OSPF traffic AND only when traffic matches the following filter expression. 
+(ip.src == 64.210.18.72/30) — Display packets whose IP source is in subnet 64.210.18.72/30 — the desire is to capture all communications for hosts in the range 64.210.18.72 – 64.210.18.74. 
+&& — AND operand strings filter expressions together, display traffic that matches the previous filter expressions ((ospf ) && (ip.src == 64.210.18.72/30)) AND the following.
+!(ospf.msg == 1) — The ! at the beginning of this filter expression dictates to Wireshark NOT to display traffic that matches the filter. The (ospf.msg == 1) expression matches all of the OSPF Hello packets. This filter is applied to eliminate all of the OSPF Hello Packet chatter in the communication between R1 and the new OSPF neighbor allowing an Analyst to focus on the data exchanged between the neighbors to complete full adjacency.
+
+Use the following commands to enable password authentication:
+ip ospf authentication-key <password> — Interface-specific command.
+area area-id authentication — OSPF process command.
+
+To enable MD5 authentication, use the following commands:
+ip ospf message-digest-key <keyid> md5 <key> — Interface-specific command.
+area area-id authentication message-digest — OSPF process command.
+
+Cisco commands used in this step
+show run interface GigabitEthernet3 — Displays the current configuration of the referenced interface.
+show ip interface brief GigabitEthernet3 — Provides a brief summary of the interface and its status.
+
+Enable MD5 Authentication in OSPF Area 0.
+Cisco commands used in this step:
+
+show run | section router ospf — Show the current configuration section for all OSPF processes.
+configure terminal — Enters the router configuration mode.
+router ospf 1 — Enter router OSPF process configuration.
+no passive-interface GigabitEthernet3 — Enable the interface allowing it to communicate with OSPF neighbors and form adjacency.
+area 0 authentication message-digest — Enables MD5 authentication for OSPF Area 0.
+end — Returns the prompt to enable mode.
+show run | section router ospf - Confirm the new configuration
+
+
+Wireshark display filter = ((ospf) && (ip.src == 64.210.18.70)) && (ospf.auth.crypt.key_id) 
+Breaking down the Wireshark display filter:
+(ospf) — Display only the OSPF protocol that needs to be inspected.
+&& - AND operand strings filter expressions together, display only OSPF traffic AND only traffic matching the following filter expression. 
+(ip.src == 64.210.18.70) — Display packets whose IP source is 64.210.18.70.
+&& - AND operand strings filter expressions together, display traffic that matches the previous filter expressions ((ospf) && (ip.src == 64.210.18.70)) AND the following filter expression.
+(ospf.auth.crypt.key_id) — Display OSPF packets that contain a field containing the Authentication Encryption Key ID.
+
+
+Now that the MD5 Key-ID has been identified as 18, pivot back or log in to R1 to add the interface configuration.
+
+Cisco commands used in this step:
+sh run int GigabitEthernet3 — Displays the current configuration of the referenced interface.
+configure terminal — Enters the router configuration mode.
+interface GigabitEthernet3 — Enters the interface configuration mode.
+ip ospf message-digest-key 18 md5 cda.lan — Defines the MD5 Key-ID and Key for authentication.
+end — Returns the prompt to enable mode.
+show ip interface brief GigabitEthernet3 — Provides a brief summary of the interface and its status.
+
+The routers establishing adjacency can be observed in the packet capture with the Wireshark display filter ((ospf) && (ip.src == 64.210.18.68/30)).
+Breaking down the Wireshark display filter:
+(ospf) — Display only the OSPF protocol that needs to be inspected.
+&& — AND operand strings filter expressions together, display only OSPF traffic AND only when traffic matches the following filter expression. 
+(ip.src == 64.210.18.68/30) — Display packets whose IP source is in subnet 64.210.18.68/30 — the desire is to capture all communications for hosts in the range 64.210.18.68 – 64.210.18.71. 
+
+Pivot back to R1 to check the neighbor status and routing table. 
+show ip ospf neighbor — Provides a brief summary of the router's current OSPF neighbor.
+show ip route ospf — Displays OSPF routes in the routing table.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
