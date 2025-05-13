@@ -340,22 +340,54 @@ Optional non-transitive – BGP attributes that might or might not be recognized
 ########## mod 10 lesson 3 ###############
 ######### Protocol Basics ##########
 
+all we did was wireshark
 
 
 
+########## mod 11 lesson 1 ###############
+######### Microsoft Communication Protocols ##########
+
+image saved : netbios hex sufix
+image saved : zeeklogs
+image saved : windows login event id
+image saved : 
+image saved : 
+image saved : 
+
+Microsoft uses a layered approach to networking with each layer supporting the ones above and below. Very simplistically:
+- Windows applications call high-level networking APIs, like WinHTTP
+- High-level APIs use the Winsock API to package up the data and decide which transport protocols to use and the associated addressing used for those transport protocols
+- One or more LSPs process the data and pass it to the corresponding TSP
+- The TSP then interfaces with the kernel drivers and APIs to actually craft packets and frames, and send out over the physical medium
+
+Winsock is based on the Berkeley Software Distribution (BSD) Sockets API that became the standard for UNIX systems.
+
+A client using the Winsock API uses the following sequence and function calls to send and receive network traffic:
+Calls a Winsock initialization function
+Creates a socketCalls getaddrinfo to obtain the address of the server it wants to connect to (such as an Internet Protocol version 4 [IPv4] address)
+Calls connect — includes the server address/port returned from getaddrinfo — to start a connection
+Calls send and recv to send and receive data across the socket
+
+A server using the Winsock API uses the following sequence to send and receive network traffic:
+
+Calls a Winsock initialization function
+Creates a socket
+Binds the new socket to listen on a local address using bind. The address (local interface — or all interfaces — and a port number for TCP and UDP) it binds to is usually pre-defined and does not change so that clients always know how to connect to that server application (for example HTTP usually binds to TCP port 80)
+For connection-oriented services (e.g., TCP, Sequenced Packet Exchange [SPX]) the application performs a listen with a backlog (the number of connections the server asks Winsock to hold in reserve until it is able to accept them)
+Call accept, which waits for a connection from a client, and will create a new socket for the connection  between the server and client, and leaves the original socket still listening for new connections
+Calls send and recv to send and receive data across the socket
+
+The SMB protocol is a network file and resource sharing protocol that was originally introduced in the 1980s with SMBv1. Since then, the SMB protocol has evolved multiple times and seen more recent versions that include end-to-end SMB encryption — introduced in SMBv3 for Windows 8 and Server 2012. SMBv3.1.1 is the latest version and was introduced for Windows 10 and Server 2016. 
+
+Remote desktop access is often used by system administrators to see the same screen that a user is seeing to better troubleshoot any issues they are having. It can mirror a user’s desktop windows, or provide the same windowed experience a user normally has from a traditional computer in a remote location. There are three main applications that can be used within Windows to make RDP connections to remote systems: Remote Desktop Connection tool (mstsc.exe), Remote Desktop Connection Manager (RDCMan), and the Remote Desktop universal app found on the Microsoft Store. Microsoft RDP uses TCP port 3389 for remote desktop connections. This port should not be exposed to the internet or have port-forwarding enabled from an internet-facing device to internal hosts. For RDP connections originating outside an enterprise network, sound security practices involve establishing a Virtual Private Network (VPN) connection — or other secure tunnel — to an internal network and then using RDP clients to make connections in that isolated environment. RDP uses Microsoft's normal authentication protocols and procedures to control access — typically Kerberos in modern networks — and has logs and events associated with account logon and logoff as a typical user has. 
 
 
+########## mod 11 lesson 2 ###############
+######### Network Security Devices (CUI) ##########
 
-
-
-
-
-
-
-
-
-
-
+image saved : 
+image saved : 
+image saved : 
 
 
 
