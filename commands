@@ -265,7 +265,81 @@ NOTE: It is important to note the number at the end of the POST request in the U
 81: Cached password data from the system, web browsers, email clients, etc.83: Browser form data submitted by applications90: System information
 
 
+########## mod 11 lesson 1 ###############
+######### Microsoft Communication Protocols ##########
 
+
+command line 
+
+netsh winsock show catalog : Use the netsh command to view the Winsock catalog
+
+nbtstat -n : command to view the local NetBIOS names
+
+nbtstat -A 172.16.4.4 :  run nbtstat -A to view the cda-exec-3 NetBIOS names remotely
+
+command line
+
+chrome
+Open Chrome from the desktop and select the Arkime bookmark — 199.63.64.201:8005.
+. Enter the following command in the search box and select Search to filter the results to just packets between cda-win-hunt and cda-exec-3:
+ip == 199.63.64.31 && ip == 172.16.4.4 :
+
+
+powershell
+
+Get-ChildItem \\.\pipe\ : cmdlet to view open named pipes
+
+following commands to view the effective permissions of the spoolss named pipe:
+cd "c:\Program Files\Sysinternals"
+.\accesschk64.exe \\.\pipe\spoolss
+
+powershell
+
+command line 
+
+net share : command to view the administrative shares on cda-win-hunt
+
+net view \\172.16.4.4 /all : command on the remote host 172.16.4.4 (cda-exec-3) to view the SMB share available:
+
+net view \\cda-file /all : command to view the resources being shared on the cda-file server
+
+net use * \\cda-file\c$ : command to create a mapping to the c$ administrative share on the cda-file host:
+
+
+Run the following commands to browse through the newly mapped shares:
+NOTE: Replace the letter W with the drive letter returned from the net use command, if different.
+
+C:\Windows\System32>w:
+W:\>dir
+W:\>cd share
+W:\share>dir
+
+Run the following commands to continue to browse the newly mapped share and copy a remote file to the local system:
+NOTE: Replace the letter W with the drive letter returned from the net use command, if different.
+
+W:\share>cd IT
+W:\share\IT>dir
+W:\share\IT>copy sysmon.bat c:\temp
+
+Enter the following commands to verify the sysmon.bat file was copied to the local host and view the current connected share(s):
+NOTE: Replace the letter W with the drive letter returned from the net use command, if different.
+
+W:\share\IT>c:
+C:\Windows\System32>cd c:\temp
+C:\temp>dir
+C:\temp>net use
+
+
+net use w: /delete : command with the /delete option to delete the share (un-map):
+
+
+
+########## mod 11 lesson 2 ###############
+######### Network Security Devices (CUI) ##########
+
+image saved : 
+image saved : 
+image saved : 
 
 
 
