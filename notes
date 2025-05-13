@@ -385,10 +385,110 @@ Remote desktop access is often used by system administrators to see the same scr
 ########## mod 11 lesson 2 ###############
 ######### Network Security Devices (CUI) ##########
 
+image saved : suricata levels
+image saved : 
+image saved : 
+image saved : 
+image saved : 
 image saved : 
 image saved : 
 image saved : 
 
+
+
+Firewalls operate across the Open Systems Interconnect (OSI) model’s layers, typically from the network layer to the application layer. There are four main types of firewalls:
+Packet filtering firewall (stateless): Operates at the network layer and compares incoming and outgoing packets to ACL. These ACLs are basic and typically only include Internet Protocol (IP) addresses, protocols, ports, and an action such as approve or deny. Each packet is checked against the rule without any additional tracking of connections or state.
+Circuit-level gateways: Similar to packet filtering firewalls, except they check the session-level protocols for a valid connection. They typically operate on User Datagram Protocol (UDP) and Transport Control Protocol (TCP) and create a virtual circuit with the internal host. The connection to the external host appears to come from the gateway. This is similar to how Network Address Translation (NAT) and Port Address Translation (PAT) function, except the gateway creates a separate connection and ensures a connection is valid before continuing to forward packets.
+Stateful inspection firewall: Similar to packet filtering firewall, except they also keep track of established connections and create dynamic rules based on a state table. The state table is built when a connection is completed (using a connection-based protocol like TCP) and includes the source and destination IP addresses and ports. A dynamic rule is added to allow packets that match an established connection’s state and drops packets that are not part of an established connection. Due to the increased processing of the packets/sessions, they consume more resources than packet filtering firewalls and circuit-level gateways.
+Application-level gateway (proxy firewalls): Similar to circuit-level gateways, but provide much deeper inspection, including the same functions as a stateful firewall. The internal and external hosts do not directly connect, instead there are separate connections made to the proxy. The proxy performs state inspection and has complete access to the communication so rules can be very specific about the internals or details of the data traversing the proxy. This is also called deep-packet inspection. Deep-packet inspection can be bypassed or enabled based on conditions set by the administrator. The more processing of a packet/session a proxy conducts, the more processing power and resources it requires, which can be a significant bottleneck for network throughput.
+
+
+Vendors also market next-generation firewalls, which do not have a standard, so the features they employ are dependent on what the vendor implements. These next-generation firewalls are operating at the application-level like proxy firewalls. Additional features a next-generation firewall employs may include:
+
+Zero-trust sandboxing: Placing devices in an isolated enclave until certain security checks have been completed (e.g., antivirus scan, patch scan, etc.)
+
+Role-based: Specify rules based on a configured role assigned to a user (e.g., only certain users can connect with wireless devices)
+
+Artificial Intelligence (AI)/Machine Learning (ML): May use AI/ML to dynamically create rules to allow or block traffic
+
+Secure Sockets Layer (SSL)/Transport Layer Security (TLS) decryption: Requires internal clients to create an encrypted connection with the proxy, which creates a separate encrypted connection to the external host. This allows the device to decrypt and inspect data traversing the proxy (very resource intensive).
+
+IDS/IPS functions: May include IDS (passive) or IPS (active) defenses instead of using a separate device or server
+
+
+Suricata
+
+
+Suricata is an open-source Network Security Monitoring (NSM) solution that can be used as a NIDS and an IPS. Suricata uses rules to perform actions — like alerting a security analyst — on live or recorded Packet Capture (PCAP) data. The rule format Suricata uses is compatible with other NSM applications — including Snort — and also supports the Lua scripting language to extend processing and alerting beyond the traditional rules format. While Snort has been around longer than Suricata, Suricata has several features that are not currently available in Snort. Suricata features include:
+Multithreaded: Supports running many threads to take advantage of multi-core Central Processing Units (CPU)
+Hardware acceleration: Supports using graphics cards to process and inspect network traffic
+File extraction: Supports recognizing, extracting, and saving files from network traffic
+Scripting: Uses the Lua scripting language
+
+The Suricata documentation includes the full feature set.
+
+Security Onion and Suricata
+
+
+Suricata is often deployed as part of the Security Onion (SO) suite. SO has three alerting engines: Suricata, Wazuh, and Playbook. Each of these engines has its own alerting system and severity, which SO converts into a standard level:
+
+
+
+ET - Suricata rule
+GPL - SNORT rule
+
+Suricata rules are comprised of three parts:
+Action: What happens when the signature matches
+Header: Describes the protocol, IP address, ports, and network flow direction of the rule
+Rule options: Specifics of the rule
+
+
+
+t needs to be placed inline with the network it is protecting, as discussed in earlier lessons. The actions available are:
+alert: Generates an alert; the only option available in a passive role
+pass: Stops further inspection of the packet; typically because it is expected or not suspicious
+drop: Drops the packet and generates an alert; similar to a firewall that drops a packet
+reject: Sends a packet with the RST flag and/or an ICMP unreachable packet to the sender — originator — of the matching packet; this closes any TCP session in the process of being setup
+rejectsrc: Same as reject
+rejectdst: Sends a RST/ICMP unreachable to the destination host; the matching packet was addressed
+rejectboth: Sends a RST/ICMP unreachable to both sides of the conversation
+
+Rule Options
+
+
+
+The Options section of a Suricata rule is composed of keywords and settings. Not all keywords have settings, but there may be multiple settings separated by commas — keywords are separated by semicolons. In Figure 11.2-18, the keywords are:
+msg: The alert message associated with this rule
+flow: flow:to_server matches packets from a client to a server
+flags: flags:S,12 matches TCP SYN packets or TCP packets with the two reserved bits set
+threshold: A threshold used to control the rule’s alert frequency
+threshold:type both, track by_src, count 5, second 120 only alerts when a threshold of five matched packets from the same source IP address is exceeded within 120 seconds and only alerts five times in 120 seconds. The threshold: type setting has three options:threshold: Only alerts when the count setting is exceeded in the second time periodlimit: Only alerts count number of times in the second time periodboth: Only alerts when the count setting is exceeded in the second time period and alerts at maximum count times in the second time period
+
+reference: A reference to where more information about the signature/alert can be foundclasstype: Classification of the rule and alert; consists of a short name, and optionally, a long name, and prioritysid: Signature Identifier (ID)rev: Revision of the signaturemetadata: Additional non-functional information about the signature
+Keywords can be negated using the exclamation point (!) prior to the keyword to negate:
+
+
+SO holds all rules in the /opt/so/rules/nids directory
+
+OT networks often use bus- and serial-related protocols to communicate among devices, but also typically have some management bridge between the OT segment and one or more devices on a TCP/IP protocol stack. OT is used to refer to a variety of networks including: 
+
+SCADA
+ICS
+Distributed Control Systems (DCS)
+Programmable Logic Controllers (PLC)
+Shipboard Hull Mechanical and Electrical (HM&E)
+Remote Terminal Units (RTU)
+
+
+Many of the OT network protocols are built on proprietary equipment manufacturer requirements and may not be documented or publicly available. Some of the more common OT network protocols include: 
+
+DNP3
+Modbus
+Process Field Bus (Profibus)
+Local Operating Network (LonWorks)
+Digital Addressable Lighting Interface (DALI)
+Building Automation and Control Network (BACnet)
+Konnex (KNX)
 
 
 
