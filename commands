@@ -343,11 +343,25 @@ image saved :
 
 
 
+########## mod 11 lesson 3 ###############
+######### Logical Network Maps ##########
+
+image saved : 
+image saved : 
+image saved : 
+image saved : 
+image saved : 
+image saved : 
+image saved : 
 
 
+Perform the same configuration gathering command
 
-
-
+terminal length 0
+show running-config full
+show arp
+show interfaces
+show ip route vrf *
 
 
 
